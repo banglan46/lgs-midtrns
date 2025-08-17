@@ -560,7 +560,7 @@
             
             // Muat script Midtrans secara dinamis
             const script = document.createElement('script');
-            script.src = `https://app.sandbox.midtrans.com/snap/snap.js?client-key=${clientKey}`;
+            script.src = `https://app.midtrans.com/snap/snap.js`;
             script.onload = async () => {
                 // Setelah script dimuat, buat transaksi
                 // Hitung total belanja
@@ -729,4 +729,5 @@
         });
     </script>
 </body>
+
 </html>
