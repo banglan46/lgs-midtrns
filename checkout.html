@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Checkout - Limited Shop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://app.sandbox.midtrans.com/snap/snap.js" 
+          data-client-key="Mid-client-Ds6ROULcEejszNpJ"></script>
+</head>
+<body class="bg-gray-50">
+  <div class="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow mt-10">
+    <h2 class="text-2xl font-bold mb-6">Checkout Pesanan</h2>
+
+    <div id="checkoutItems" class="space-y-4"></div>
+
+    <div class="border-t pt-4 mt-6 flex justify-between items-center">
+      <span class="text-xl font-semibold">Total:</span>
+      <span id="checkoutTotal" class="text-2xl font-bold text-green-600">Rp 0</span>
+    </div>
+
+    <button id="payBtn" class="mt-6 w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700">
+      Bayar dengan Midtrans
+    </button>
+  </div>
+
+  <script>
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+    function formatRupiah(angka) {
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+    }
+
+    function renderCheckout() {
+      const container = document.getElementById("checkoutItems");
+      if (cart.length === 0) {
+        container.innerHTML = "<p class='text-gray-500'>Keranjang kosong</p>";
+        document.getElementById("payBtn").disabled = true;
+        return;
+      }
+      container.innerHTML = cart.map(i => `
+        <div class="flex justify-between items-center border p-3 rounded">
+          <div>
+            <p class="font-semibold">${i.name}</p>
+            <p class="text-sm text-gray-600">x${i.quantity}</p>
+          </div>
+          <span>${formatRupiah(i.price * i.quantity)}</span>
+        </div>
+      `).join("");
+      const total = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+      document.getElementById("checkoutTotal").textContent = formatRupiah(total);
+    }
+
+    renderCheckout();
+
+    document.getElementById("payBtn").addEventListener("click", async () => {
+      const total = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+
+      const response = await fetch("/.netlify/functions/createTransaction", {
+        method: "POST",
+        body: JSON.stringify({
+          amount: total,
+          name: "Customer",
+          email: "customer@example.com",
+          phone: "08123456789"
+        })
+      });
+
+      const data = await response.json();
+      window.snap.pay(data.token, {
+        onSuccess: () => alert("Pembayaran sukses!"),
+        onPending: () => alert("Menunggu pembayaran."),
+        onError: () => alert("Pembayaran gagal.")
+      });
+    });
+  </script>
+</body>
+</html>
